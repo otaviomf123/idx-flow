@@ -1,0 +1,16 @@
+# Documentation build dependencies for idx-flow
+# These are installed by Read the Docs when building documentation
+
+# Sphinx and theme
+sphinx>=7.0.0
+sphinx-rtd-theme>=2.0.0
+
+# Extensions
+sphinx-autodoc-typehints>=1.25.0
+
+# Required for importing the package during autodoc
+numpy>=1.19.0
+torch>=1.9.0
+
+# Note: healpy and scikit-learn are not strictly needed for docs
+# since autodoc only imports the module, not execute heavy computations
