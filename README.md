@@ -213,16 +213,34 @@ SpatialUpsampling(
 **Input shape**: `[B, N_in, C_in]`
 **Output shape**: `[B, output_points, C_in]` (channels preserved)
 
-#### `SpatialMLP`
+#### `SpatialMLP` (Local Non-Linear Processing)
 
-Multi-layer perceptron for complex spatial transformations.
+Unlike `SpatialConv` which applies a **linear kernel** (weighted sum of neighbors), `SpatialMLP` processes each neighborhood through a shared **Multi-Layer Perceptron**. This allows the model to approximate complex **non-linear functions** over the local manifold structure, offering significantly higher expressivity at the cost of increased computational complexity.
+
+**Architectural Difference:**
+- `SpatialConv`: `Y = sum_k(W_k * X_k) + b` (linear combination)
+- `SpatialMLP`: `Y = MLP([X_1 || X_2 || ... || X_k])` (non-linear transformation)
+
+**Trade-offs:**
+| Aspect | SpatialConv | SpatialMLP |
+|--------|-------------|------------|
+| Expressivity | Linear interactions only | Non-linear interactions |
+| Computational Cost | Lower (matrix multiply) | Higher (dense layers) |
+| Memory Usage | Lower | Higher |
+| Best For | Standard convolutions | Complex local patterns |
+
+This approach is inspired by principles from **Geometric Deep Learning** ([Bronstein et al., 2017](https://doi.org/10.1109/MSP.2017.2693418)) and **Geodesic CNNs** ([Masci et al., 2015](https://doi.org/10.1109/ICCVW.2015.112)).
 
 ```python
 SpatialMLP(
     output_points: int,                    # Number of output spatial points
     connection_indices: ndarray,           # [output_points, kernel_size]
-    hidden_units: tuple = (32, 32, 32),   # Hidden layer dimensions
-    activations: tuple = ("linear", "linear", "linear")  # Activation per layer
+    hidden_units: tuple = (32, 32, 32),    # Hidden layer dimensions
+    activations: tuple = ("gelu", "gelu", "linear"),  # Activation per layer
+    dropout: float = 0.0,                  # Dropout probability
+    use_batch_norm: bool = False,          # Apply batch normalization
+    residual: bool = False,                # Add residual connection
+    weight_init: str = "xavier_uniform"    # Weight initialization method
 )
 ```
 

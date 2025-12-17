@@ -573,19 +573,55 @@ class SpatialUpsampling(nn.Module):
 
 class SpatialMLP(nn.Module):
     """
-    Spatial Multi-Layer Perceptron for HEALPix grids.
+    Spatial Multi-Layer Perceptron for local non-linear processing on HEALPix grids.
 
-    This layer processes spatial connections through multiple dense layers,
-    enabling more complex non-linear transformations of neighborhood features.
-    It gathers features from neighboring pixels and processes them through
-    an MLP stack with optional dropout, batch normalization, and residual
-    connections.
+    This layer replaces the standard linear convolution kernel (matrix multiplication)
+    with a shared **Dense Neural Network (MLP)** applied to the flattened neighborhood
+    vector. This architectural choice is inspired by principles from Geometric Deep
+    Learning, which extends neural network operations to non-Euclidean domains such
+    as manifolds and graphs.
+
+    Architectural Difference from SpatialConv:
+        - **SpatialConv**: Applies a linear transformation to neighborhood features.
+          The output is a weighted sum: Y = sum_k(W_k * X_k) + b, which can only
+          capture linear relationships between neighbors.
+
+        - **SpatialMLP**: Concatenates neighborhood features into a single vector
+          and processes it through a multi-layer perceptron with non-linear
+          activations: Y = MLP([X_1 || X_2 || ... || X_k]). This allows the model
+          to learn **complex, non-linear interactions** between neighbors.
+
+    Trade-offs:
+        Benefits:
+            - Significantly higher **representation capacity** and expressivity
+            - Can approximate arbitrary non-linear functions over local patches
+            - Better suited for learning complex spatial patterns on manifolds
+            - Supports dropout, batch normalization, and residual connections
+
+        Costs:
+            - Higher computational cost (FLOPs) due to dense layer operations
+            - Increased memory usage for storing MLP parameters
+            - May require more training data to avoid overfitting
 
     The operation:
-        1. Gather k neighbor features for each output point
+        1. Gather k neighbor features for each output point: [B, N_out, k, C_in]
         2. Flatten the neighbor features: [B, N_out, k * C_in]
-        3. Process through MLP layers with specified activations
+        3. Process through shared MLP layers with specified activations
         4. Output: [B, N_out, hidden_units[-1]]
+
+    Literature Context:
+        This approach draws from Geometric Deep Learning research on extending
+        neural networks to non-Euclidean domains:
+
+        - Bronstein, M. M., Bruna, J., LeCun, Y., Szlam, A., & Vandergheynst, P.
+          (2017). "Geometric deep learning: Going beyond Euclidean data."
+          IEEE Signal Processing Magazine, 34(4), 18-42.
+          DOI: 10.1109/MSP.2017.2693418
+
+        - Masci, J., Boscaini, D., Bronstein, M. M., & Vandergheynst, P. (2015).
+          "Geodesic convolutional neural networks on Riemannian manifolds."
+          In Proceedings of the IEEE ICCV Workshops, pp. 37-45.
+          DOI: 10.1109/ICCVW.2015.112
 
     Args:
         output_points: Number of spatial points in the output.
@@ -624,6 +660,10 @@ class SpatialMLP(nn.Module):
         >>> x = torch.randn(8, 12 * 64**2, 16)
         >>> y = mlp(x)
         >>> print(y.shape)  # torch.Size([8, 12288, 32])
+
+    See Also:
+        - :class:`SpatialConv`: Linear convolution with lower computational cost
+        - :class:`GlobalMLP`: Channel-wise MLP without spatial neighbor gathering
     """
 
     def __init__(
