@@ -5,8 +5,11 @@
 [![PyPI version](https://badge.fury.io/py/idx-flow.svg)](https://badge.fury.io/py/idx-flow)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Documentation](https://readthedocs.org/projects/idx-flow/badge/?version=latest)](https://idx-flow.readthedocs.io/en/latest/)
 
 A PyTorch library for efficient neural network operations on spherical data using HEALPix tessellation. This library implements index-based spherical convolutions that achieve O(N) computational complexity while preserving the equal-area properties essential for atmospheric and geophysical data analysis.
+
+**[Documentation](https://idx-flow.readthedocs.io/en/latest/)**
 
 ## Citation
 

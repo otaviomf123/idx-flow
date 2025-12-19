@@ -6,6 +6,8 @@ spherical HEALPix grids using index-based convolutions. The architecture
 achieves O(N) computational complexity while preserving the equal-area
 properties essential for atmospheric and spherical data analysis.
 
+Documentation: https://idx-flow.readthedocs.io/en/latest/
+
 Structure Compilation Philosophy:
     This library decouples topology from computation. Connection indices
     (topology) are precomputed once and stored as buffers, while learnable
