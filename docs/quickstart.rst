@@ -1,22 +1,19 @@
-Quick Start Guide
-=================
+Quick Start
+===========
 
-This guide will help you get started with idx-flow in just a few minutes.
+Concepts
+--------
 
-Basic Concepts
---------------
+idx-flow works with **precomputed connection indices** that define which input
+pixels connect to each output pixel on the HEALPix grid. Layers then apply
+learnable (or fixed) transformations over these connections.
 
-idx-flow uses **precomputed connection indices** to perform efficient spatial
-operations on HEALPix grids. The key components are:
+1. Use ``compute_connection_indices`` to get the topology.
+2. Pass the indices to a layer (``SpatialConv``, ``SpatialMLP``, etc.).
+3. Run the forward pass -- shapes are ``[B, N, C]`` throughout.
 
-1. **Connection Indices**: Define which input pixels connect to each output pixel
-2. **Spatial Layers**: Apply learnable transformations using these connections
-3. **Utility Functions**: Compute indices, distances, and weights
-
-Your First Model
+A Simple Encoder
 ----------------
-
-Let's build a simple encoder that downsamples spherical data:
 
 .. code-block:: python
 
@@ -28,7 +25,6 @@ Let's build a simple encoder that downsamples spherical data:
        def __init__(self):
            super().__init__()
 
-           # Compute indices for nside 64 -> 32
            indices, _ = compute_connection_indices(64, 32, k=4)
 
            self.conv = SpatialConv(
@@ -41,22 +37,16 @@ Let's build a simple encoder that downsamples spherical data:
            self.activation = nn.GELU()
 
        def forward(self, x):
-           x = self.conv(x)
-           x = self.bn(x)
-           x = self.activation(x)
-           return x
+           return self.activation(self.bn(self.conv(x)))
 
-   # Create model and test
    model = SimpleEncoder()
-   x = torch.randn(4, 12 * 64**2, 32)  # [batch, pixels, channels]
+   x = torch.randn(4, 12 * 64**2, 32)
    y = model(x)
    print(f"Input: {x.shape} -> Output: {y.shape}")
    # Input: [4, 49152, 32] -> Output: [4, 12288, 64]
 
-Building an Autoencoder
------------------------
-
-Here's a more complete example with encoder and decoder:
+Autoencoder
+-----------
 
 .. code-block:: python
 
@@ -73,11 +63,9 @@ Here's a more complete example with encoder and decoder:
        def __init__(self, in_channels=5, latent_dim=64):
            super().__init__()
 
-           # Encoder indices (downsampling)
            idx_64_32, _ = compute_connection_indices(64, 32, k=4)
            idx_32_16, _ = compute_connection_indices(32, 16, k=4)
 
-           # Decoder indices (upsampling with weights)
            idx_16_32, _, w_16_32 = compute_connection_indices(
                16, 32, k=4, return_weights=True
            )
@@ -109,20 +97,15 @@ Here's a more complete example with encoder and decoder:
            return x
 
        def forward(self, x):
-           z = self.encode(x)
-           return self.decode(z)
+           return self.decode(self.encode(x))
 
-   # Test
    model = SphericalAutoencoder(in_channels=5)
    x = torch.randn(2, 12*64**2, 5)
-   reconstruction = model(x)
-   print(f"Input: {x.shape}")
-   print(f"Output: {reconstruction.shape}")
+   y = model(x)
+   print(f"Input: {x.shape} -> Output: {y.shape}")
 
-Using Different Initialization Methods
---------------------------------------
-
-idx-flow supports multiple weight initialization strategies:
+Weight Initialization
+---------------------
 
 .. code-block:: python
 
@@ -131,19 +114,14 @@ idx-flow supports multiple weight initialization strategies:
 
    indices = np.random.randint(0, 100, (50, 4))
 
-   # Xavier initialization (default)
-   conv_xavier = SpatialConv(50, indices, filters=32, weight_init="xavier_uniform")
-
-   # Kaiming initialization (good for ReLU/GELU)
+   conv_xavier  = SpatialConv(50, indices, filters=32, weight_init="xavier_uniform")
    conv_kaiming = SpatialConv(50, indices, filters=32, weight_init="kaiming_normal")
+   conv_ortho   = SpatialConv(50, indices, filters=32, weight_init="orthogonal")
 
-   # Orthogonal initialization (good for RNNs, deep networks)
-   conv_ortho = SpatialConv(50, indices, filters=32, weight_init="orthogonal")
+SpatialMLP
+----------
 
-Using the Enhanced SpatialMLP
------------------------------
-
-The SpatialMLP layer supports dropout, batch normalization, and residual connections:
+``SpatialMLP`` supports dropout, batch normalization, and residual connections:
 
 .. code-block:: python
 
@@ -171,6 +149,6 @@ The SpatialMLP layer supports dropout, batch normalization, and residual connect
 Next Steps
 ----------
 
-- See the :doc:`tutorial` for more advanced examples
-- Check the :doc:`api/layers` for all available layers
-- Explore :doc:`api/utils` for utility functions
+- :doc:`tutorial` -- multi-scale architectures, attention, ViT, regularization
+- :doc:`api/layers` -- full API reference
+- :doc:`api/utils` -- utility functions

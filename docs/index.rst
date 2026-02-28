@@ -17,17 +17,16 @@ idx-flow Documentation
 
 ----
 
-**idx-flow** is a PyTorch library for efficient neural network operations on spherical
-data using HEALPix tessellation. This library implements index-based spherical
-convolutions that achieve **O(N) computational complexity** while preserving the
-equal-area properties essential for atmospheric and geophysical data analysis.
+PyTorch layers for O(N) spherical convolutions on HEALPix grids.
+Topology (connection indices) is precomputed once and stored as buffers;
+learnable weights are applied at runtime.
 
 Citation
 --------
 
 .. important::
 
-   If you use this library in your research, please cite the following paper:
+   If you use this library in your research, please cite:
 
    **Atmospheric Data Compression and Reconstruction Using Spherical GANs**
 
@@ -51,64 +50,47 @@ Citation
          doi={10.1109/IJCNN64981.2025.11227156}
       }
 
-Structure Compilation Philosophy
---------------------------------
-
-The **idx-flow** library decouples **topology** from **computation**:
-
-- **Connection indices** (topology) are precomputed once and stored as buffers
-- **Learnable weights** (computation) are applied at runtime
-
-This architectural design enables:
-
-- **O(N) complexity** instead of O(N^2) for neighbor lookups
-- **Flexible architecture design** with reusable index structures
-- **Efficient memory usage** through shared topology buffers
-
-Key Features
-------------
-
-- **Efficient O(N) Complexity**: Precomputed neighbor indices enable linear-time convolutions
-- **HEALPix Native**: Built for the Hierarchical Equal Area isoLatitude Pixelization scheme
-- **PyTorch Integration**: Seamless integration with PyTorch models and training pipelines
-- **Flexible Architecture**: Support for encoder-decoder networks, GANs, and custom architectures
-- **Multiple Layer Types**: Convolution, transpose convolution, upsampling, MLP, attention, and more
-
-Quick Start
------------
-
-Installation
-^^^^^^^^^^^^
-
-.. code-block:: bash
-
-   pip install idx-flow
-
-Basic Usage
-^^^^^^^^^^^
+Quick Example
+-------------
 
 .. code-block:: python
 
    import torch
    from idx_flow import SpatialConv, compute_connection_indices
 
-   # Compute connection indices for downsampling (nside 64 -> 32)
    indices, distances = compute_connection_indices(
        nside_in=64, nside_out=32, k=4
    )
 
-   # Create spatial convolution layer
    conv = SpatialConv(
-       output_points=12 * 32**2,  # 12288 pixels
+       output_points=12 * 32**2,
        connection_indices=indices,
        filters=64,
        weight_init="kaiming_normal"
    )
 
-   # Forward pass
    x = torch.randn(8, 12 * 64**2, 32)  # [batch, points, channels]
    y = conv(x)
    print(y.shape)  # torch.Size([8, 12288, 64])
+
+Package Layout
+--------------
+
+All public names are re-exported from ``idx_flow`` directly::
+
+   from idx_flow import SpatialConv, SpatialViT, SpatialMLP
+
+Internally the code is organized as:
+
+- ``conv`` -- SpatialConv, SpatialTransposeConv, SpatialUpsampling
+- ``mlp`` -- SpatialMLP, GlobalMLP
+- ``norm`` -- SpatialBatchNorm, SpatialLayerNorm, SpatialInstanceNorm, SpatialGroupNorm
+- ``regularization`` -- SpatialDropout, ChannelDropout
+- ``attention`` -- SpatialSelfAttention
+- ``vit`` -- SpatialPatchEmbedding, SpatialTransformerBlock, SpatialViT
+- ``pooling`` -- SpatialPooling, Squeeze, Unsqueeze
+- ``functional`` -- get_initializer, get_activation, type aliases
+- ``utils`` -- hp_distance, get_weights, compute_connection_indices
 
 Contents
 --------
@@ -145,6 +127,6 @@ Indices and Tables
 Acknowledgments
 ---------------
 
-- **Monan Project**, **CEMPA Project**, **LAMCAD**, and **PGMet**
-- CNPq grants (processes 422614/2021-1, and 315349/2023-9)
+- Monan Project, CEMPA Project, LAMCAD, PGMet
+- CNPq (processes 422614/2021-1 and 315349/2023-9)
 - National Institute for Space Research (INPE)

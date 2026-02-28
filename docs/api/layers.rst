@@ -1,15 +1,16 @@
 Layers API Reference
 ====================
 
-This module provides PyTorch layers for processing data on spherical HEALPix grids
-using index-based convolutions.
+All layers are importable directly from ``idx_flow``. Internally they live in
+separate modules (``conv``, ``mlp``, ``norm``, ``regularization``, ``attention``,
+``vit``, ``pooling``, ``functional``).
 
 .. contents:: Table of Contents
    :local:
    :depth: 2
 
-Core Spatial Layers
--------------------
+Convolution Layers
+------------------
 
 SpatialConv
 ^^^^^^^^^^^
@@ -31,14 +32,6 @@ SpatialUpsampling
 ^^^^^^^^^^^^^^^^^
 
 .. autoclass:: idx_flow.SpatialUpsampling
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-SpatialPooling
-^^^^^^^^^^^^^^
-
-.. autoclass:: idx_flow.SpatialPooling
    :members:
    :undoc-members:
    :show-inheritance:
@@ -127,8 +120,43 @@ SpatialSelfAttention
    :undoc-members:
    :show-inheritance:
 
-Utility Layers
---------------
+Vision Transformer Layers
+-------------------------
+
+SpatialPatchEmbedding
+^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: idx_flow.SpatialPatchEmbedding
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+SpatialTransformerBlock
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: idx_flow.SpatialTransformerBlock
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+SpatialViT
+^^^^^^^^^^
+
+.. autoclass:: idx_flow.SpatialViT
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Pooling and Utility Layers
+--------------------------
+
+SpatialPooling
+^^^^^^^^^^^^^^
+
+.. autoclass:: idx_flow.SpatialPooling
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Squeeze
 ^^^^^^^
@@ -146,8 +174,8 @@ Unsqueeze
    :undoc-members:
    :show-inheritance:
 
-Initialization and Activation Utilities
----------------------------------------
+Functional Utilities
+--------------------
 
 get_initializer
 ^^^^^^^^^^^^^^^
@@ -160,28 +188,26 @@ get_activation
 .. autofunction:: idx_flow.get_activation
 
 Type Aliases
-------------
-
-The following type aliases are available for type hints:
+^^^^^^^^^^^^
 
 .. py:data:: idx_flow.InitMethod
 
-   Literal type for weight initialization methods:
+   Weight initialization methods:
    ``"xavier_uniform"``, ``"xavier_normal"``, ``"kaiming_uniform"``,
    ``"kaiming_normal"``, ``"orthogonal"``, ``"normal"``, ``"uniform"``, ``"zeros"``
 
 .. py:data:: idx_flow.ActivationType
 
-   Literal type for activation functions:
+   Activation functions:
    ``"relu"``, ``"selu"``, ``"leaky_relu"``, ``"gelu"``, ``"elu"``,
    ``"tanh"``, ``"sigmoid"``, ``"swish"``, ``"mish"``, ``"linear"``
 
 .. py:data:: idx_flow.InterpolationMethod
 
-   Literal type for interpolation methods:
+   Interpolation methods:
    ``"linear"``, ``"idw"``, ``"gaussian"``
 
 .. py:data:: idx_flow.PoolingMethod
 
-   Literal type for pooling methods:
+   Pooling methods:
    ``"mean"``, ``"max"``, ``"sum"``

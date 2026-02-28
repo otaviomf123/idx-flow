@@ -13,8 +13,6 @@ Requirements
 From PyPI
 ---------
 
-The simplest way to install idx-flow is via pip:
-
 .. code-block:: bash
 
    pip install idx-flow
@@ -22,51 +20,44 @@ The simplest way to install idx-flow is via pip:
 From Source
 -----------
 
-To install the latest development version from source:
-
 .. code-block:: bash
 
    git clone https://github.com/otaviomf123/idx-flow.git
    cd idx-flow
    pip install -e .
 
-For development with all optional dependencies:
+With dev dependencies:
 
 .. code-block:: bash
 
    pip install -e ".[dev]"
 
-Verifying Installation
-----------------------
-
-After installation, you can verify that idx-flow is working correctly:
+Verifying
+---------
 
 .. code-block:: python
 
    import torch
    from idx_flow import SpatialConv, compute_connection_indices
 
-   # Compute connection indices
    indices, distances = compute_connection_indices(
        nside_in=16, nside_out=8, k=4
    )
 
-   # Create a simple layer
    conv = SpatialConv(
        output_points=12 * 8**2,
        connection_indices=indices,
        filters=32
    )
 
-   # Test forward pass
    x = torch.randn(2, 12 * 16**2, 16)
    y = conv(x)
-   print(f"Output shape: {y.shape}")  # Should be [2, 768, 32]
+   print(f"Output shape: {y.shape}")  # [2, 768, 32]
 
-Optional: GPU Support
----------------------
+GPU
+---
 
-idx-flow automatically uses GPU if CUDA is available. To check:
+idx-flow uses GPU automatically when CUDA is available:
 
 .. code-block:: python
 

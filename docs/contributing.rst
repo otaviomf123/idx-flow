@@ -1,53 +1,37 @@
 Contributing
 ============
 
-We welcome contributions to idx-flow! This document provides guidelines for contributing.
+Contributions are welcome.
 
-Getting Started
----------------
+Setup
+-----
 
-1. Fork the repository on GitHub: https://github.com/otaviomf123/idx-flow
-2. Clone your fork locally:
+1. Fork the repo: https://github.com/otaviomf123/idx-flow
+2. Clone and install:
 
    .. code-block:: bash
 
       git clone https://github.com/YOUR_USERNAME/idx-flow.git
       cd idx-flow
-
-3. Create a virtual environment and install dependencies:
-
-   .. code-block:: bash
-
       python -m venv venv
-      source venv/bin/activate  # On Windows: venv\Scripts\activate
+      source venv/bin/activate
       pip install -e ".[dev]"
 
-4. Create a branch for your changes:
+3. Create a branch:
 
    .. code-block:: bash
 
       git checkout -b feature/your-feature-name
 
-Development Workflow
---------------------
-
 Running Tests
-^^^^^^^^^^^^^
+-------------
 
 .. code-block:: bash
 
    pytest tests/ -v
 
-Running the verification script:
-
-.. code-block:: bash
-
-   python verify_build.py
-
-Code Formatting
-^^^^^^^^^^^^^^^
-
-We use black and isort for code formatting:
+Formatting
+----------
 
 .. code-block:: bash
 
@@ -55,89 +39,40 @@ We use black and isort for code formatting:
    isort src/ tests/
 
 Type Checking
-^^^^^^^^^^^^^
+-------------
 
 .. code-block:: bash
 
    mypy src/idx_flow/
 
-Building Documentation
-^^^^^^^^^^^^^^^^^^^^^^
+Building Docs
+-------------
 
 .. code-block:: bash
 
    cd docs
    make html
 
-The documentation will be in ``docs/_build/html/``.
+Output goes to ``docs/_build/html/``.
 
-Coding Standards
-----------------
+Code Style
+----------
 
-- Follow PEP 8 style guidelines
-- Use type hints for function arguments and return values
-- Write Google-style docstrings for all public functions and classes
-- Keep lines under 100 characters
-- Write tests for new functionality
+- PEP 8
+- Type hints on public functions
+- Google-style docstrings
+- Lines under 100 characters
+- Tests for new functionality
 
-Docstring Example
-^^^^^^^^^^^^^^^^^
+Pull Requests
+-------------
 
-.. code-block:: python
-
-   def my_function(arg1: int, arg2: str = "default") -> bool:
-       """
-       Short description of the function.
-
-       Longer description if needed, explaining the function's
-       purpose and behavior.
-
-       Args:
-           arg1: Description of arg1.
-           arg2: Description of arg2. Default is "default".
-
-       Returns:
-           Description of the return value.
-
-       Raises:
-           ValueError: When arg1 is negative.
-
-       Example:
-           >>> result = my_function(42, "hello")
-           >>> print(result)
-           True
-       """
-       pass
-
-Pull Request Process
---------------------
-
-1. Ensure all tests pass
-2. Update documentation if needed
-3. Add an entry to CHANGELOG if appropriate
-4. Submit a pull request with a clear description
-
-Your PR should:
-
-- Have a clear, descriptive title
-- Reference any related issues
-- Include tests for new functionality
-- Pass all CI checks
+1. Make sure tests pass.
+2. Update docs if needed.
+3. Add a changelog entry if appropriate.
+4. Open a PR with a clear description.
 
 Reporting Issues
 ----------------
 
-When reporting issues, please include:
-
-- Python version
-- PyTorch version
-- Operating system
-- Minimal code to reproduce the issue
-- Full error traceback
-
-Questions?
-----------
-
-Feel free to open an issue for questions or discussions about the project.
-
-Thank you for contributing!
+Include: Python version, PyTorch version, OS, minimal reproducer, full traceback.
