@@ -3,7 +3,8 @@ Tests for idx-flow Vision Transformer spatial layers.
 
 This module contains comprehensive tests for the Vision Transformer layers
 implemented in the idx-flow package: SpatialPatchEmbedding,
-SpatialTransformerBlock, and SpatialViT.
+SpatialTransformerBlock, SpatialViT, and SpatialSelfAttention with
+FlashAttention 2 / SDPA support.
 """
 
 import numpy as np
@@ -13,9 +14,111 @@ import torch.nn as nn
 
 from idx_flow import (
     SpatialPatchEmbedding,
+    SpatialSelfAttention,
     SpatialTransformerBlock,
     SpatialViT,
 )
+from idx_flow.attention import _SDPA_AVAILABLE
+
+
+class TestSpatialSelfAttention:
+    """Tests for SpatialSelfAttention with backend selection."""
+
+    def test_default_backend_is_auto(self):
+        """Test that default backend is 'auto'."""
+        attn = SpatialSelfAttention(embed_dim=64, num_heads=4)
+        assert attn.attn_backend == "auto"
+
+    def test_manual_backend(self):
+        """Test manual attention backend."""
+        attn = SpatialSelfAttention(embed_dim=64, num_heads=4, attn_backend="manual")
+        assert attn.attn_backend == "manual"
+        assert not attn._use_sdpa()
+
+        x = torch.randn(2, 50, 64)
+        y = attn(x)
+        assert y.shape == (2, 50, 64)
+
+    @pytest.mark.skipif(not _SDPA_AVAILABLE, reason="SDPA requires PyTorch >= 2.0")
+    def test_sdpa_backend(self):
+        """Test SDPA backend."""
+        attn = SpatialSelfAttention(embed_dim=64, num_heads=4, attn_backend="sdpa")
+        assert attn._use_sdpa()
+
+        x = torch.randn(2, 50, 64)
+        y = attn(x)
+        assert y.shape == (2, 50, 64)
+
+    @pytest.mark.skipif(not _SDPA_AVAILABLE, reason="SDPA requires PyTorch >= 2.0")
+    def test_auto_selects_sdpa_when_available(self):
+        """Test that auto selects SDPA on PyTorch >= 2.0."""
+        attn = SpatialSelfAttention(embed_dim=64, num_heads=4, attn_backend="auto")
+        assert attn._use_sdpa()
+
+    @pytest.mark.skipif(not _SDPA_AVAILABLE, reason="SDPA requires PyTorch >= 2.0")
+    def test_sdpa_and_manual_produce_same_output(self):
+        """Test that SDPA and manual backends produce the same output in eval mode."""
+        torch.manual_seed(0)
+        attn_sdpa = SpatialSelfAttention(embed_dim=64, num_heads=4, attn_backend="sdpa")
+        attn_manual = SpatialSelfAttention(embed_dim=64, num_heads=4, attn_backend="manual")
+
+        # Share weights
+        attn_manual.load_state_dict(attn_sdpa.state_dict())
+
+        attn_sdpa.eval()
+        attn_manual.eval()
+
+        x = torch.randn(2, 50, 64)
+        y_sdpa = attn_sdpa(x)
+        y_manual = attn_manual(x)
+
+        assert torch.allclose(y_sdpa, y_manual, atol=1e-5)
+
+    def test_gradient_flow_all_backends(self):
+        """Test gradient flow for each available backend."""
+        backends = ["manual"]
+        if _SDPA_AVAILABLE:
+            backends.append("sdpa")
+
+        for backend in backends:
+            attn = SpatialSelfAttention(embed_dim=64, num_heads=4, attn_backend=backend)
+            x = torch.randn(2, 50, 64, requires_grad=True)
+            y = attn(x)
+            y.sum().backward()
+            assert x.grad is not None, f"No gradient for backend '{backend}'"
+
+    def test_dropout_during_training(self):
+        """Test that dropout is applied during training."""
+        attn = SpatialSelfAttention(embed_dim=64, num_heads=4, dropout=0.5)
+        attn.train()
+
+        x = torch.randn(4, 50, 64)
+        y1 = attn(x)
+        y2 = attn(x)
+
+        # With high dropout, outputs should differ between calls in training mode
+        assert not torch.allclose(y1, y2)
+
+    def test_no_dropout_during_eval(self):
+        """Test that dropout is NOT applied during eval."""
+        attn = SpatialSelfAttention(embed_dim=64, num_heads=4, dropout=0.5)
+        attn.eval()
+
+        x = torch.randn(4, 50, 64)
+        y1 = attn(x)
+        y2 = attn(x)
+
+        assert torch.allclose(y1, y2)
+
+    def test_invalid_backend(self):
+        """Test that invalid embed_dim still raises error."""
+        with pytest.raises(ValueError, match="embed_dim .* must be divisible"):
+            SpatialSelfAttention(embed_dim=65, num_heads=4)
+
+    def test_extra_repr_shows_backend(self):
+        """Test that extra_repr includes the backend."""
+        attn = SpatialSelfAttention(embed_dim=64, num_heads=4, attn_backend="manual")
+        assert "manual" in attn.extra_repr()
 
 
 class TestSpatialPatchEmbedding:
@@ -246,6 +349,17 @@ class TestSpatialTransformerBlock:
             x = torch.randn(2, 50, 64)
             y = block(x)
             assert y.shape == (2, 50, 64)
+
+    def test_attn_backend_propagation(self):
+        """Test that attn_backend is propagated to SpatialSelfAttention."""
+        block = SpatialTransformerBlock(
+            embed_dim=64, num_heads=4, attn_backend="manual"
+        )
+        assert block.attn.attn_backend == "manual"
+
+        x = torch.randn(2, 50, 64)
+        y = block(x)
+        assert y.shape == (2, 50, 64)
 
     def test_extra_repr(self):
         """Test string representation."""
@@ -529,6 +643,40 @@ class TestSpatialViT:
         x = torch.randn(4, 400, 8)
         y = vit(x)
         assert y.shape == (4, 100, 64)
+
+    def test_attn_backend_propagation(self, small_connection_indices):
+        """Test that attn_backend is propagated to all transformer blocks."""
+        vit = SpatialViT(
+            output_points=100,
+            connection_indices=small_connection_indices,
+            embed_dim=64,
+            depth=3,
+            num_heads=4,
+            attn_backend="manual",
+        )
+
+        for block in vit.blocks:
+            assert block.attn.attn_backend == "manual"
+
+        x = torch.randn(2, 400, 8)
+        y = vit(x)
+        assert y.shape == (2, 100, 64)
+
+    @pytest.mark.skipif(not _SDPA_AVAILABLE, reason="SDPA requires PyTorch >= 2.0")
+    def test_sdpa_backend_forward(self, small_connection_indices):
+        """Test ViT forward pass with SDPA backend."""
+        vit = SpatialViT(
+            output_points=100,
+            connection_indices=small_connection_indices,
+            embed_dim=64,
+            depth=2,
+            num_heads=4,
+            attn_backend="sdpa",
+        )
+
+        x = torch.randn(2, 400, 8)
+        y = vit(x)
+        assert y.shape == (2, 100, 64)
 
 
 class TestEndToEndViT:

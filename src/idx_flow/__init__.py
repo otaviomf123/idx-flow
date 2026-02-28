@@ -22,7 +22,7 @@ All public names are re-exported here for convenience::
     from idx_flow import SpatialConv, compute_connection_indices
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.1"
 __author__ = "Otavio Medeiros Feitosa"
 
 # Core spatial layers
@@ -61,6 +61,7 @@ from idx_flow.regularization import (
 
 # Attention layers
 from idx_flow.attention import (
+    AttnBackend,
     SpatialSelfAttention,
 )
 
@@ -114,6 +115,7 @@ __all__ = [
     "SpatialDropout",
     "ChannelDropout",
     # Attention layers
+    "AttnBackend",
     "SpatialSelfAttention",
     # Vision Transformer layers
     "SpatialPatchEmbedding",

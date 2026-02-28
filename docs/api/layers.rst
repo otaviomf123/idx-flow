@@ -211,3 +211,10 @@ Type Aliases
 
    Pooling methods:
    ``"mean"``, ``"max"``, ``"sum"``
+
+.. py:data:: idx_flow.AttnBackend
+
+   Attention computation backends:
+   ``"auto"`` (SDPA when available, else manual),
+   ``"sdpa"`` (force scaled_dot_product_attention, requires PyTorch >= 2.0),
+   ``"manual"`` (explicit matmul-softmax-matmul)

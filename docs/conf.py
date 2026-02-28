@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath("../src"))
 project = "idx-flow"
 copyright = "2025, Otavio Medeiros Feitosa"
 author = "Otavio Medeiros Feitosa"
-release = "0.1.0"
+release = "0.2.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

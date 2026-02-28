@@ -17,6 +17,12 @@ From PyPI
 
    pip install idx-flow
 
+Upgrading from a previous version:
+
+.. code-block:: bash
+
+   pip install --upgrade idx-flow
+
 From Source
 -----------
 

@@ -27,6 +27,12 @@ If you use this library in your research, please cite the paper above.
 pip install idx-flow
 ```
 
+Upgrade:
+
+```bash
+pip install --upgrade idx-flow
+```
+
 From source:
 
 ```bash
@@ -183,7 +189,7 @@ from idx_flow import SpatialConv, SpatialViT, SpatialMLP
 
 ### Attention (`attention`)
 
-`SpatialSelfAttention(embed_dim, num_heads)` -- standard multi-head self-attention. O(N^2) in spatial points; use after downsampling on large grids.
+`SpatialSelfAttention(embed_dim, num_heads, attn_backend="auto")` -- multi-head self-attention with FlashAttention 2 / SDPA support (PyTorch >= 2.0). O(N^2) in spatial points; use after downsampling on large grids.
 
 ### Vision Transformer (`vit`)
 

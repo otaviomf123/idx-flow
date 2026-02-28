@@ -14,7 +14,7 @@ import torch.nn as nn
 from numpy.typing import NDArray
 from torch import Tensor
 
-from idx_flow.attention import SpatialSelfAttention
+from idx_flow.attention import AttnBackend, SpatialSelfAttention
 from idx_flow.functional import ActivationType, InitMethod, get_activation, get_initializer
 
 
@@ -200,6 +200,9 @@ class SpatialTransformerBlock(nn.Module):
         activation: Activation function for the FFN. Default is "gelu".
         bias: Whether to include bias in linear projections. Default is True.
         norm_eps: Epsilon for layer normalization. Default is 1e-6.
+        attn_backend: Attention backend. ``"auto"`` uses SDPA/FlashAttention 2
+            when available, ``"manual"`` forces explicit matmul path.
+            Default is ``"auto"``.
 
     Shape:
         - Input: [B, N, embed_dim]
@@ -230,6 +233,7 @@ class SpatialTransformerBlock(nn.Module):
         activation: ActivationType = "gelu",
         bias: bool = True,
         norm_eps: float = 1e-6,
+        attn_backend: AttnBackend = "auto",
     ) -> None:
         super().__init__()
 
@@ -252,6 +256,7 @@ class SpatialTransformerBlock(nn.Module):
             num_heads=num_heads,
             dropout=dropout,
             bias=bias,
+            attn_backend=attn_backend,
         )
 
         # Feed-forward network
@@ -345,6 +350,10 @@ class SpatialViT(nn.Module):
         weight_init: Weight initialization method for patch embedding.
             Default is "xavier_uniform".
         norm_eps: Epsilon for layer normalization. Default is 1e-6.
+        attn_backend: Attention backend for all transformer blocks.
+            ``"auto"`` uses SDPA/FlashAttention 2 when available,
+            ``"manual"`` forces explicit matmul path.
+            Default is ``"auto"``.
 
     Shape:
         - Input: [B, N_in, C_in] where B is batch size, N_in is input points,
@@ -391,6 +400,7 @@ class SpatialViT(nn.Module):
         bias: bool = True,
         weight_init: InitMethod = "xavier_uniform",
         norm_eps: float = 1e-6,
+        attn_backend: AttnBackend = "auto",
     ) -> None:
         super().__init__()
 
@@ -434,6 +444,7 @@ class SpatialViT(nn.Module):
                 activation=activation,
                 bias=bias,
                 norm_eps=norm_eps,
+                attn_backend=attn_backend,
             )
             for _ in range(depth)
         ])

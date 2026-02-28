@@ -108,6 +108,15 @@ Attention
 ``SpatialSelfAttention`` is O(N^2) in spatial points, so use it on
 low-resolution bottlenecks.
 
+On PyTorch >= 2.0, attention is computed via ``scaled_dot_product_attention``,
+which dispatches to **FlashAttention 2** on Ampere+ GPUs with float16/bfloat16,
+or to memory-efficient / math backends otherwise. Control this with
+``attn_backend``:
+
+- ``"auto"`` (default): use SDPA when available, else manual.
+- ``"sdpa"``: force SDPA (requires PyTorch >= 2.0).
+- ``"manual"``: force explicit matmul-softmax-matmul.
+
 .. code-block:: python
 
    from idx_flow import SpatialSelfAttention, SpatialLayerNorm
@@ -133,6 +142,16 @@ low-resolution bottlenecks.
            return x
 
    block = AttentionBlock(embed_dim=128, num_heads=8)
+
+To force a specific backend:
+
+.. code-block:: python
+
+   # Force FlashAttention 2 / SDPA (requires PyTorch >= 2.0)
+   attn = SpatialSelfAttention(64, 8, attn_backend="sdpa")
+
+   # Force manual attention (always available)
+   attn = SpatialSelfAttention(64, 8, attn_backend="manual")
 
 Vision Transformer
 ------------------
